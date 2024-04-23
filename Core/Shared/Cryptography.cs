@@ -86,14 +86,18 @@ namespace Core.Shared {
                 }
                 return encrypted;
             }
-            private string decrypt(byte[] data) {
+            private string decrypt(byte[] data) 
+            {
                 if (AesObj is null)
                     throw new Exception("Key is missing");
                 string? decrypted = null;
                 ICryptoTransform decryptor = AesObj.CreateDecryptor(AesObj.Key, AesObj.IV);
-                using (MemoryStream mstream = new MemoryStream(data)) {
-                    using (CryptoStream csstream = new CryptoStream(mstream, decryptor, CryptoStreamMode.Read)) {
-                        using (StreamReader sreader = new StreamReader(csstream)) {
+                using (MemoryStream mstream = new MemoryStream(data)) 
+                {
+                    using (CryptoStream csstream = new CryptoStream(mstream, decryptor, CryptoStreamMode.Read))
+                    {
+                        using (StreamReader sreader = new StreamReader(csstream)) 
+                        {
                             decrypted = sreader.ReadToEnd();
                         }
                     }
@@ -118,7 +122,8 @@ namespace Core.Shared {
                     return null;
                 }
             }
-            public string? decrypt(string encryptedText) {
+            public string? decrypt(string encryptedText) 
+            {
                 try {
                     var encryptedBytes = Convert.FromBase64String(encryptedText);
                     var result = decrypt(encryptedBytes);
