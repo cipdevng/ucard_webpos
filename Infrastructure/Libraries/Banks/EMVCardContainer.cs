@@ -14,7 +14,8 @@ namespace Infrastructure.Libraries.Banks {
             _paymentProvider = paymentProvider;
             _socket = socket;
         }
-        public async Task<IEMVCardPayment?> getService(Channels channel) {
+        public async Task<IEMVCardPayment?> getService(Channels channel)
+        {
             await _socket.sendMessage("Attempting to get service type " + channel.ToString());
             switch (channel) {
                 case Channels.ARCA:

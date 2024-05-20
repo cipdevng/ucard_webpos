@@ -94,58 +94,58 @@ namespace Core.Application.UseCases {
         public async Task<WebResponse<object>> transact(EMVStandardPayload payload) 
         {
             WebResponse response = new WebResponse();
-            await loadIdentity();
+            //await loadIdentity();
             PaymentChannelBase? channel = null;
-            if (payload.preferredChannel != null) 
-            {
-                channel = await _paymentChannelRepo.get((Channels)payload.preferredChannel);
-                if (channel == null)
-                {
-                    return response.fail(ResponseCodes.INVALID_REQUEST, "The channel is invalid");
+            //if (payload.preferredChannel != null) 
+            //{
+            //    channel = await _paymentChannelRepo.get((Channels)payload.preferredChannel);
+            //    if (channel == null)
+            //    {
+            //        return response.fail(ResponseCodes.INVALID_REQUEST, "The channel is invalid");
 
-                }
-                if (channel.status != ChannelStatus.ACTIVE)
-                {
-                    return response.fail(ResponseCodes.INVALID_REQUEST, "The channel is currently inactive or deactivated");
+            //    }
+            //    if (channel.status != ChannelStatus.ACTIVE)
+            //    {
+            //        return response.fail(ResponseCodes.INVALID_REQUEST, "The channel is currently inactive or deactivated");
 
-                }
-              } else {
-                var channels = await _paymentChannelRepo.get(new PaymentChannelFilter { amount = payload.amount/100, status = ChannelStatus.ACTIVE });
-                if (channels.Count < 1)
-                {
-                    return response.fail(ResponseCodes.INVALID_REQUEST, "Could not find a suitable channel");
-                }
+            //    }
+            //  } else {
+            //    var channels = await _paymentChannelRepo.get(new PaymentChannelFilter { amount = payload.amount/100, status = ChannelStatus.ACTIVE });
+            //    if (channels.Count < 1)
+            //    {
+            //        return response.fail(ResponseCodes.INVALID_REQUEST, "Could not find a suitable channel");
+            //    }
               
-                channel = channels.OrderBy(O => O.getFee(payload.amount / 100)).FirstOrDefault();
-              }
-            if(channel is null)
-            {
-                return response.fail(ResponseCodes.INVALID_REQUEST, "Could not find a suitable channel");
+            //    channel = channels.OrderBy(O => O.getFee(payload.amount / 100)).FirstOrDefault();
+            //  }
+            //if(channel is null)
+            //{
+            //    return response.fail(ResponseCodes.INVALID_REQUEST, "Could not find a suitable channel");
 
-            }
-            payload.preferredChannel = channel.channel;
-            Transaction trx = new Transaction(payload, activeProfile.publicKey);
+            //}
+            payload.preferredChannel = Channels.GRUPP; //channel.channel;
+            //Transaction trx = new Transaction(payload, activeProfile.publicKey);
             var processor = await _emvContainer.getService((Channels)payload.preferredChannel);
-            await _trxRepo.create(trx);
-            if (processor is null)
-            {
-                return response.fail(ResponseCodes.SYSTEM_ERROR, $"Could not find a suitable processor matching {payload.preferredChannel.ToString()}");
+            //await _trxRepo.create(trx);
+            //if (processor is null)
+            //{
+            //    return response.fail(ResponseCodes.SYSTEM_ERROR, $"Could not find a suitable processor matching {payload.preferredChannel.ToString()}");
 
-            }
+            //}
             try {
                 var result = await processor.createPayment(payload);
                 int status = -1;
-                string raw = await _cache.getWithKey(trx.transID);
+                //string raw = await _cache.getWithKey(trx.transID);
                 if(result.Field39 == "00") {
                     status = 1;
                 }
                 var t = JObject.FromObject(result).ToString();
-                trx.setTransactionStatus(t, raw, status);
-                await _trxRepo.updateResponse(trx);
+                //trx.setTransactionStatus(t, raw, status);
+                //await _trxRepo.updateResponse(trx);
                 return response.success(result);
             } catch(Exception err) {
-                trx.setTransactionStatus(err.Message, err.ToString(), -1);
-                await _trxRepo.updateResponse(trx);
+                //trx.setTransactionStatus(err.Message, err.ToString(), -1);
+                //await _trxRepo.updateResponse(trx);
                 throw;
             }
         }

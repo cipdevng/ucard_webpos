@@ -8,6 +8,7 @@ using Infrastructure.Abstraction.HTTP;
 using Infrastructure.DTO;
 using Microsoft.Extensions.Options;
 using NetCore.AutoRegisterDi;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -36,19 +37,22 @@ namespace Infrastructure.Libraries.Banks {
             _cache = cache;
         }
 
-        private async Task<SessionData> getSession(string serialNumber, string stan) {
+        private async Task<SessionData> getSession(string serialNumber, string stan)
+        {
             if (_sessionState.exists(serialNumber)) {
                 var sessionObj = _sessionState.get(serialNumber);
                 if (!sessionObj.expired())
                     return sessionObj.state;
             }
             long expirySecs = 86400 - Utilities.getTodayDate().unixTimestamp % 86400;
-            var data = JObject.FromObject(new { serialNumber = serialNumber, stan = stan, onlyAccountInfo = true }).ToString();
+            var data = JObject.FromObject(new { serialNumber = "63201125995137", stan = stan, onlyAccountInfo = true }).ToString();
             var content = new StringContent(data, Encoding.UTF8, "application/json");
             var authenticationString = $"{_luxConfig.basicUsername}:{_luxConfig.basicPassword}";
             var base64EncodedAuthenticationString = Convert.ToBase64String(ASCIIEncoding.ASCII.GetBytes(authenticationString));
             Dictionary<string, string> headers = new Dictionary<string, string>();
             headers.Add("Authorization", $"Basic {base64EncodedAuthenticationString}");
+            headers.Add("terminalId", "2033HQOQ");
+
             var responseObj = await _request.sendRequest(_luxConfig.Endpoints.startSession, HttpMethod.Post, content, headers);
             if(!responseObj.successful)
                 if(string.IsNullOrEmpty(responseObj.result))
@@ -64,16 +68,20 @@ namespace Infrastructure.Libraries.Banks {
             return responseObject.data;
         }
 
-        public async Task<TransferResponse> createPayment(EMVStandardPayload payload) {
+        public async Task<TransferResponse> createPayment(EMVStandardPayload payload)
+        {
             string stan = Cryptography.CharGenerator.genID(6, Cryptography.CharGenerator.characterSet.NUMERIC);
             var session = await getSession(payload.terminalID, stan);
+            
             var payloadObj = new { pan = payload.CardData.pan, stan = stan, rrn = payload.rrn, amount = payload.amount, iccData = payload.iccData, track2Data  = payload.CardData.track2, postDataCode  = _luxConfig.postDataCode, cardExpiryDate = payload.CardData.expiryYear+payload.CardData.expiryMonth, acquiringInstitutionalCode = payload.institutionCode, sequenceNumber = payload.cardSequenceNumber.PadLeft(3, '0'), pin = payload.CardData.pinBlock, type = "CARD", accountType = payload.accountType.ToString() };
+           
             string jdata = JObject.FromObject(payloadObj).ToString(Newtonsoft.Json.Formatting.None);
             var data = tdesEncrypt(jdata, session.sessionId);
             var authenticationString = $"{_luxConfig.basicUsername}:{_luxConfig.basicPassword}";
             var base64EncodedAuthenticationString = Convert.ToBase64String(ASCIIEncoding.ASCII.GetBytes(authenticationString));
             Dictionary<string, string> headers = new Dictionary<string, string>();
-            headers.Add("terminalId", $"{session.terminalId}");
+            //headers.Add("terminalId", $"{session.terminalId}"); //2033HQOQ
+            headers.Add("terminalId", "2033CYAQ");
             headers.Add("Authorization", $"Basic {base64EncodedAuthenticationString}");
             var content = new StringContent(data, Encoding.UTF8, "text/plain");
             string url = _luxConfig.Endpoints.transaction;

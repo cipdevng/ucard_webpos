@@ -7,7 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Core.Model.DTO.Request {
-    public class EMVStandardPayload : ICloneable {
+    public class EMVStandardPayload : ICloneable 
+    {
         public Channels? preferredChannel { get; set; }
         public long amount { get; set; }
         public string applicationInterchangeProfile { get; set; }
@@ -35,7 +36,8 @@ namespace Core.Model.DTO.Request {
         public AccountType accountType { get; set; }
         public CardData CardData { get; set; }
 
-        public object Clone() {
+        public object Clone() 
+        {
             var clone = JObject.FromObject(this).ToObject<EMVStandardPayload>();
             try {
                 clone.CardData.pan = clone.CardData.pan[^4..].PadLeft(clone.CardData.pan.Length, '*');
