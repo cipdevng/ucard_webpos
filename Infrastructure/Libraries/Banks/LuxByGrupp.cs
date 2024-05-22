@@ -72,6 +72,9 @@ namespace Infrastructure.Libraries.Banks {
         {
             string stan = Cryptography.CharGenerator.genID(6, Cryptography.CharGenerator.characterSet.NUMERIC);
             var session = await getSession(payload.terminalID, stan);
+            string rrns = DateTime.Now.ToString("yyyyMMHHmmss");
+            payload.rrn = rrns;
+            payload.institutionCode = "000014";
             
             var payloadObj = new { pan = payload.CardData.pan, stan = stan, rrn = payload.rrn, amount = payload.amount, iccData = payload.iccData, track2Data  = payload.CardData.track2, postDataCode  = _luxConfig.postDataCode, cardExpiryDate = payload.CardData.expiryYear+payload.CardData.expiryMonth, acquiringInstitutionalCode = payload.institutionCode, sequenceNumber = payload.cardSequenceNumber.PadLeft(3, '0'), pin = payload.CardData.pinBlock, type = "CARD", accountType = payload.accountType.ToString() };
            
